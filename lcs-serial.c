@@ -39,6 +39,16 @@ void printTable(){
 	printf("\n\n");
 }
 
+
+void printTracker(){
+	for(int i = 1; i <= N_LENGTH; i++){
+		for(int j = 1; j <= M_LENGTH; j++)
+			printf(" %c %c %d |", N[i-1], M[j-1], TRACKER[i][j]);
+		printf("\n");
+	}
+	printf("\n\n");
+}
+
 //Reads an input file with a given name and initializes global variables
 int initProblem(string filename)
 {
@@ -80,6 +90,8 @@ int initProblem(string filename)
 //Computes the solution using an auxiliary table
 void computeSolution()
 {
+
+	//printTable();
 	for(int i = 1; i <= N_LENGTH; i++){
 		for(int j = 1; j <= M_LENGTH; j++){
 			if(N[i-1] == M[j-1]){
@@ -90,7 +102,8 @@ void computeSolution()
 				TABLE[i][j] = TABLE[i-1][j];
 				//UP - FETCH VALUE FROM PREVIOUS SUBPROBLEM
 				TRACKER[i][j] = UP;
-			} else { TABLE[i][j] = TABLE[i][j-1];
+			} else {
+				TABLE[i][j] = TABLE[i][j-1];
 				//LEFT - FETCH VALUE FROM CURRENT SUBPROBLEM
 				TRACKER[i][j] = LEFT;
 			}
@@ -101,9 +114,9 @@ void computeSolution()
 //Prints the result of our previous computation
 void printResult()
 {
-	int length = TABLE[N_LENGTH][M_LENGTH];
+	int length = TABLE[N_LENGTH][M_LENGTH];	
 	char result[length+1];
-	result[length--] = '\0';
+	result[length--] = '\0';	
 	
 	//Prints the size of the biggest subsequence
 	printf("%d\n", TABLE[N_LENGTH][M_LENGTH]);
@@ -112,16 +125,50 @@ void printResult()
 	int i=N_LENGTH;
 	int j=M_LENGTH; 
 	
-	while(length >= 0){
-		if(TRACKER[i][j] == MATCH){
+//	printTable();
+//	printTracker();
+	int flagMatch=0;
+	int firstmove=-1;
+
+
+	while (TRACKER[i][j] == MATCH) {
+		result[length--] = N[i-1];
+		--i;
+		--j;
+	}
+
+
+	if (TRACKER[i][j] == UP) {
+		--i;
+		firstmove = UP;
+	}
+
+	else if(TRACKER[i][j] == LEFT) {
+		--j;
+		firstmove = LEFT;
+	}
+
+	while (length >= 0 && i >= 0 && j >= 0) {
+		if (TRACKER[i][j] == MATCH) {
 			result[length--] = N[i-1];
 			--i;
 			--j;
-		}
-		else if(TRACKER[i][j] == UP) --i;
-		else --j;
+
+			flagMatch = 1;
+			}
+		else if (flagMatch) {
+
+				if (firstmove == UP)
+					--i;
+				else
+					--j;
+				flagMatch = 0; 
+			}
+		else if(TRACKER[i][j] == UP) 	--i;
+			 else --j;	
+				
 	}
-	
+
 	printf("%s\n", result);
 }
 
