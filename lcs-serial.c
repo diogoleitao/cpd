@@ -86,7 +86,7 @@ void computeSolution()
 				TABLE[i][j] = TABLE[i-1][j-1] + 1;
 				//DIAGONAL - IT'S A MATCH
 				TRACKER[i][j] = MATCH;
-			} else if(TABLE[i-1][j] >= TABLE[i][j-1]) {
+			} else if(TABLE[i-1][j] > TABLE[i][j-1]) {
 				TABLE[i][j] = TABLE[i-1][j];
 				//UP - FETCH VALUE FROM PREVIOUS SUBPROBLEM
 				TRACKER[i][j] = UP;
