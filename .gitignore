@@ -26,3 +26,9 @@
 *.exe
 *.out
 *.app
+
+*.in
+*.out
+out
+lcs
+lcs-omp
