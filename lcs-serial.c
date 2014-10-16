@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string>
 
 using namespace std;
@@ -21,8 +22,8 @@ int N_LENGTH;
 int M_LENGTH;
 
 //Auxiliary tables
-int** TABLE;
-int** TRACKER;
+short** TABLE;
+short** TRACKER;
 
 
 /***********************
@@ -71,12 +72,12 @@ int initProblem(string filename)
 		fclose(myfile);
 
 		//Create auxiliary tables
-		TABLE = new int*[N_LENGTH+1];
-		TRACKER = new int*[N_LENGTH+1];
+		TABLE = new short*[N_LENGTH+1];
+		TRACKER = new short*[N_LENGTH+1];
 		
 		for(int i = 0; i < N_LENGTH+1; ++i){
-			TABLE[i] = new int[M_LENGTH+1]();
-			TRACKER[i] = new int[M_LENGTH+1]();
+			TABLE[i] = new short[M_LENGTH+1]();
+			TRACKER[i] = new short[M_LENGTH+1]();
 		}
 	}
 	else{
@@ -98,7 +99,7 @@ void computeSolution()
 				TABLE[i][j] = TABLE[i-1][j-1] + 1;
 				//DIAGONAL - IT'S A MATCH
 				TRACKER[i][j] = MATCH;
-			} else if(TABLE[i-1][j] >= TABLE[i][j-1]) {
+			} else if(TABLE[i-1][j] > TABLE[i][j-1]) {
 				TABLE[i][j] = TABLE[i-1][j];
 				//UP - FETCH VALUE FROM PREVIOUS SUBPROBLEM
 				TRACKER[i][j] = UP;
@@ -179,7 +180,6 @@ void printResult()
 
 int main(int argc, const char* argv[])
 {
-
 	//The problem has one input. Another file.
 	if(argc != 2){
 		printf("lcs-serial should have *1* input, it has *%d*.", argc-1);
@@ -195,6 +195,8 @@ int main(int argc, const char* argv[])
 	
 	//Print
 	printResult();
+
+
 	
 	return 0;
 }
