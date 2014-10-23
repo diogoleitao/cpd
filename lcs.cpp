@@ -51,7 +51,7 @@ void initProblem() {
 	TABLE = new short*[correctedSizeN];
 	TRACKER = new short*[correctedSizeN];
 
-	#pragma omp parallel for
+#pragma omp parallel for
 	for (i = 0; i < N_LENGTH + 1; ++i) {
 		TABLE[i] = new short[correctedSizeM]();
 		TRACKER[i] = new short[correctedSizeM]();
@@ -85,16 +85,13 @@ void computeSolution() {
 	while(!(imin > imax)){		
 
 		diagonal = imax-imin+1;
-#pragma omp parallel for
+#pragma omp parallel for schedule (guided,128)
 		for(k = 0; k < diagonal; k++){
 			computePosition(imax-k, jmin+k);
 		}
 
-		if(imax < N_LENGTH) imax++;
-		else jmin++;
-
-		if(jmax < M_LENGTH) jmax++;
-		else imin++;
+		(imax < N_LENGTH)?imax++:jmin++;
+		(jmax < M_LENGTH)?jmax++:imin++;
 	}
 }
 
