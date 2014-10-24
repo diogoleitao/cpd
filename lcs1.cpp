@@ -59,40 +59,28 @@ void initProblem() {
 	}
 }
 
-//Computes the value of a single position of the table;
-void computePosition(int i, int j) {
-	if (N[i-1] == M[j-1]) {
-		TABLE[i][j] = TABLE[i-1][j-1] + 1;
-		//DIAGONAL - IT'S A MATCH
-		TRACKER[i][j] = MATCH;
-	} else if (TABLE[i-1][j] > TABLE[i][j-1]) {
-		TABLE[i][j] = TABLE[i-1][j];
-		//UP - FETCH VALUE FROM PREVIOUS SUBPROBLEM
-		TRACKER[i][j] = UP;
-	} else {
-		TABLE[i][j] = TABLE[i][j-1];
-		//LEFT - FETCH VALUE FROM CURRENT SUBPROBLEM
-		TRACKER[i][j] = LEFT;
-	}
-}
-
 //Computes the solution using an auxiliary table
 void computeSolution() {
-	int imin = 1, imax = 1, jmin = 1, jmax = 1;
+	int i = 0, j = 0;
 	short n, m;
-	int total = N_LENGTH+M_LENGTH;	
-	int diagonal, k;
 
-	while(!(imin > imax)){		
-
-		diagonal = imax-imin+1;
-#pragma omp parallel for schedule (guided,128)
-		for(k = 0; k < diagonal; k++){
-			computePosition(imax-k, jmin+k);
+#pragma omp parallel for schedule(guided,128)
+	for (i = 1; i <= N_LENGTH; i++) {
+		for (j = 1; j <= M_LENGTH; j++) {
+			if (N[i-1] == M[j-1]) {
+				TABLE[i][j] = TABLE[i-1][j-1] + 1;
+				//DIAGONAL - IT'S A MATCH
+				TRACKER[i][j] = MATCH;
+			} else if (TABLE[i-1][j] > TABLE[i][j-1]) {
+				TABLE[i][j] = TABLE[i-1][j];
+				//UP - FETCH VALUE FROM PREVIOUS SUBPROBLEM
+				TRACKER[i][j] = UP;
+			} else {
+				TABLE[i][j] = TABLE[i][j-1];
+				//LEFT - FETCH VALUE FROM CURRENT SUBPROBLEM
+				TRACKER[i][j] = LEFT;
+			}
 		}
-
-		(imax < N_LENGTH)?imax++:jmin++;
-		(jmax < M_LENGTH)?jmax++:imin++;
 	}
 }
 
@@ -100,16 +88,15 @@ void computeSolution() {
 void printResult() {
 	int length = TABLE[N_LENGTH][M_LENGTH];
 	char result[length + 1];
+	result[length--] = '\0';
 
 	//Prints the size of the biggest subsequence
 	cout << TABLE[N_LENGTH][M_LENGTH] << endl;;
 
-	result[length--] = '\0';
-
 	//Tracks the biggest subsequence
 	int i = N_LENGTH;
 	int j = M_LENGTH;
-	
+
 	while (length >= 0) {
 		if (TRACKER[i][j] == MATCH) {
 			result[length--] = N[i-1];
@@ -153,6 +140,5 @@ int main(int argc, const char* argv[]) {
 	
 	double end = omp_get_wtime(), time = end - start;
 	cout << time << endl;
-
 	return 0;
 }
