@@ -12,9 +12,9 @@ using namespace std;
  ***********************/
 
 //Direccions
-int MATCH = 0;
-int UP = 1;
-int LEFT = 2;
+short MATCH = 0;
+short UP = 1;
+short LEFT = 2;
  
 //Input strings
 char* N;
@@ -23,11 +23,6 @@ char* M;
 //String size
 int N_LENGTH;
 int M_LENGTH;
-
-//Table restraints
-int Y;
-int lim1;
-int lim2;
 
 //Auxiliary tables
 short** TABLE;
@@ -99,18 +94,44 @@ void computeSolution() {
 	short n, m;
 	int total = N_LENGTH+M_LENGTH;	
 	int diagonal, k;
+	int minDim = (N_LENGTH<M_LENGTH)?N_LENGTH:M_LENGTH;
+	int dimDiff = abs(N_LENGTH - M_LENGTH);
 
-	while(!(imin > imax)){		
+	//Phase 1: increasing workload
+	for(diagonal = 1; imax < minDim; 	imax++, jmax++, diagonal++){
+#pragma omp parallel for
+		for(k = 0; k < diagonal; k++){
+			computePosition(imax-k, jmin+k);
+		}
+	}
+
+	//Phase 2: constant workload
+	for(int iter = 0; iter < dimDiff; iter++, (imax < N_LENGTH)?imax++:jmin++, (jmax < M_LENGTH)?jmax++:imin++){
+#pragma omp parallel for
+		for(k = 0; k < diagonal; k++){
+			computePosition(imax-k, jmin+k);
+		}
+	}
+
+	//Phase 3: increasing workload
+	for(; imin <= imax; imin++, jmin++, diagonal--){
+#pragma omp parallel for
+		for(k = 0; k < diagonal; k++){
+			computePosition(imax-k, jmin+k);
+		}
+	}
+
+	/*while(!(imin > imax)){		
 
 		diagonal = imax-imin+1;
-#pragma omp parallel for schedule (guided,128)
+#pragma omp parallel for
 		for(k = 0; k < diagonal; k++){
 			computePosition(imax-k, jmin+k);
 		}
 
 		(imax < N_LENGTH)?imax++:jmin++;
 		(jmax < M_LENGTH)?jmax++:imin++;
-	}
+	}*/
 }
 
 //Prints the result of our previous computation
