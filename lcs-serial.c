@@ -30,6 +30,17 @@ short** TRACKER;
  ** AUXILIARY PROCEDURES
  ***********************/
 
+//The cost routine
+short cost(int x){
+	int i, n_iter = 20;
+	double dcost = 0;
+	
+	for(i = 0; i < n_iter; i++)
+		dcost += pow(sin((double) x),2) + pow(cos((double) x),2);
+
+	return (short) (dcost / n_iter + 0.1);
+}
+
 //Prints the auxiliary table
 void printTable(){
 	for(int i = 0; i <= N_LENGTH; i++){

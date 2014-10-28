@@ -1,8 +1,5 @@
 all:
-	g++ -o lcs lcs-test.cpp
+	g++ -fopenmp lcs-omp.cpp -o lcs-omp
 
-omp:
-	g++ -fopenmp -o lcs-omp lcs-test.cpp
-
-clean:
-	rm -f *.o lcs lcs-omp
+zip:
+	zip  g12omp lcs-serial.cpp lcs-omp.cpp
