@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <omp.h>
+#include <math.h>
 
 using namespace std;
 
@@ -31,6 +32,17 @@ short** TRACKER;
 /***********************
  ** AUXILIARY PROCEDURES
  ***********************/
+
+//The cost routine
+short cost(int x){
+	int i, n_iter = 20;
+	double dcost = 0;
+	
+	for(i = 0; i < n_iter; i++)
+		dcost += pow(sin((double) x),2) + pow(cos((double) x),2);
+
+	return (short) (dcost / n_iter + 0.1);
+}
 
 //Prints the auxiliary table
 void printTable() {
@@ -64,11 +76,10 @@ void computeSolution() {
 	int i = 0, j = 0;
 	short n, m;
 
-#pragma omp parallel for schedule(guided,128)
 	for (i = 1; i <= N_LENGTH; i++) {
 		for (j = 1; j <= M_LENGTH; j++) {
 			if (N[i-1] == M[j-1]) {
-				TABLE[i][j] = TABLE[i-1][j-1] + 1;
+				TABLE[i][j] = TABLE[i-1][j-1] + cost(j);
 				//DIAGONAL - IT'S A MATCH
 				TRACKER[i][j] = MATCH;
 			} else if (TABLE[i-1][j] > TABLE[i][j-1]) {
