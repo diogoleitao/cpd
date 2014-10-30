@@ -155,26 +155,34 @@ void printResult() {
  ***********************/
 
 int main(int argc, const char* argv[]) {
-	double start = omp_get_wtime();
-	ios::sync_with_stdio(false);
-	cin.tie(0);
-	cin >> N_LENGTH >> M_LENGTH;
-
-	//Create the arrays to store the strings;
-	N = new char[N_LENGTH + 1];
-	M = new char[M_LENGTH + 1];
-
-	cin >> N;
-	cin >> M;
-
-	initProblem();
-
-	//Compute
-	computeSolution();
+	double start = omp_get_wtime();	
 	
-	//Print
-	printResult();
+	FILE *myfile;
+	string filename = argv[1];
+	myfile = fopen(filename.c_str(), "r");
 	
+	if (myfile != NULL){
+
+		fscanf(myfile, "%d %d", &N_LENGTH, &M_LENGTH);
+
+		//Create the arrays to store the strings;
+		N = new char[N_LENGTH + 1];
+		M = new char[M_LENGTH + 1];
+
+		fscanf(myfile, "%s", N);
+		fscanf(myfile, "%s", M);
+		
+		initProblem();
+
+		//Compute
+		computeSolution();
+		
+		//Print
+		printResult();
+		
+		
+
+	}
 	double end = omp_get_wtime(), time = end - start;
 	cout << time << endl;
 
