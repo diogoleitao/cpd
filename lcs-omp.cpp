@@ -12,10 +12,10 @@ using namespace std;
  ***********************/
 
 //Direccions
-short MATCH = 0;
-short UP = 1;
-short LEFT = 2;
- 
+#define MATCH 0
+#define UP 1
+#define LEFT 2
+
 //Input strings
 char* N;
 char* M;
@@ -34,11 +34,11 @@ short** TRACKER;
  ***********************/
 
 //The cost routine
-short cost(int x){
+short cost(int x) {
 	int i, n_iter = 20;
 	double dcost = 0;
 	
-	for(i = 0; i < n_iter; i++)
+	for (i = 0; i < n_iter; i++)
 		dcost += pow(sin((double) x),2) + pow(cos((double) x),2);
 
 	return (short) (dcost / n_iter + 0.1);
@@ -91,15 +91,13 @@ void computePosition(int i, int j) {
 //Computes the solution using an auxiliary table
 void computeSolution() {
 	int imin = 1, imax = 1, jmin = 1, jmax = 1;
-	short n, m;
-	int total = N_LENGTH+M_LENGTH;	
 	int diagonal, k;
 	int minDim = (N_LENGTH<M_LENGTH)?N_LENGTH:M_LENGTH;
 	int dimDiff = abs(N_LENGTH - M_LENGTH);
 
 	//Phase 1: increasing workload
-	for(diagonal = 1; imax < minDim; 	imax++, jmax++, diagonal++){
-#pragma omp parallel for
+	for(diagonal = 1; imax < minDim; imax++, jmax++, diagonal++){
+#pragma omp parallel for schedule(dynamic,64)
 		for(k = 0; k < diagonal; k++){
 			computePosition(imax-k, jmin+k);
 		}
@@ -113,25 +111,13 @@ void computeSolution() {
 		}
 	}
 
-	//Phase 3: increasing workload
+	//Phase 3: decreasing workload
 	for(; imin <= imax; imin++, jmin++, diagonal--){
-#pragma omp parallel for
+#pragma omp parallel for schedule(guided,64)
 		for(k = 0; k < diagonal; k++){
 			computePosition(imax-k, jmin+k);
 		}
 	}
-
-	/*while(!(imin > imax)){		
-
-		diagonal = imax-imin+1;
-#pragma omp parallel for
-		for(k = 0; k < diagonal; k++){
-			computePosition(imax-k, jmin+k);
-		}
-
-		(imax < N_LENGTH)?imax++:jmin++;
-		(jmax < M_LENGTH)?jmax++:imin++;
-	}*/
 }
 
 //Prints the result of our previous computation
