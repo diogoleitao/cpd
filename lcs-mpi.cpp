@@ -2,14 +2,15 @@
  *   CPD
  *
  *   MPI - LCS Implementation
- *
- *   
+ *  
  */
+
 #include <mpi.h>
 #include <stdio.h>
 #include <string>
 #include <math.h>
 #include <stdlib.h>
+#include <iostream>
 
 using namespace std;
 
@@ -40,12 +41,12 @@ short** TRACKER;
  ***********************/
 
 //The cost routine
-short cost(int x){
+short cost(int x) {
 	int i, n_iter = 20;
 	double dcost = 0;
 	
-	for(i = 0; i < n_iter; i++)
-		dcost += pow(sin((double) x),2) + pow(cos((double) x),2);
+	for (i = 0; i < n_iter; i++)
+		dcost += pow(sin((double) x), 2) + pow(cos((double) x), 2);
 
 	return (short) (dcost / n_iter + 0.1);
 }
@@ -97,7 +98,7 @@ void printResult() {
 	result[length--] = '\0';
 
 	//Prints the size of the biggest subsequence
-	cout << TABLE[N_LENGTH][M_LENGTH] << endl;;
+	cout << TABLE[N_LENGTH][M_LENGTH] << endl;
 
 	//Tracks the biggest subsequence
 	int i = N_LENGTH;
@@ -108,8 +109,7 @@ void printResult() {
 			result[length--] = N[i-1];
 			--i;
 			--j;
-		}
-		else if(TRACKER[i][j] == UP)
+		} else if (TRACKER[i][j] == UP)
 			--i;
 		else
 			--j;
@@ -125,53 +125,52 @@ void printResult() {
 
 int main (int argc, char *argv[]) {
 
-    MPI_Status status;
-    int id, p, i;
-    double secs;
+	MPI_Status status;
+	int id, p, i;
+	double secs;
 
-    MPI_Init (&argc, &argv);
+	MPI_Init (&argc, &argv);
 
-    MPI_Comm_rank (MPI_COMM_WORLD, &id);
-    MPI_Comm_size (MPI_COMM_WORLD, &p);
+	MPI_Comm_rank (MPI_COMM_WORLD, &id);
+	MPI_Comm_size (MPI_COMM_WORLD, &p);
   
-	if(!id){
+	if (!id) {
 		FILE *myfile;
 		string filename = argv[1];
 		myfile = fopen(filename.c_str(), "r");
-	
-		if (myfile != NULL){
 
-			fscanf(myfile, "%d %d", &N_LENGTH, &M_LENGTH);
+		if (myfile != NULL) {
+			if (fscanf(myfile, "%d %d", &N_LENGTH, &M_LENGTH) <= 0)
+				exit(1);
 
 			//Create the arrays to store the strings;
 			N = new char[N_LENGTH + 1];
 			M = new char[M_LENGTH + 1];
 
-			fscanf(myfile, "%s", N);
-			fscanf(myfile, "%s", M);
-		
-		
+			if (fscanf(myfile, "%s", N) <= 0)
+				exit(1);
+			if (fscanf(myfile, "%s", M) <= 0)
+				exit(1);
+
 			//Divide input
 
 			//Envia informação aos outros processos
-			for(i = 1; i < p; i++){
+			for (i = 1; i < p; i++) {
 				MPI_Send(&N_LENGTH, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
 				MPI_Send(&M_LENGTH, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
 				MPI_Send(N, N_LENGTH + 1, MPI_CHAR, i, 2, MPI_COMM_WORLD);
 				MPI_Send(M, M_LENGTH + 1, MPI_CHAR, i, 3, MPI_COMM_WORLD);
 			}
-		}
-		else{
-			printf ("%s: input file %s not found.", filename.c_str());
+		} else {
+			printf ("%s: input file not found.", filename.c_str());
 			MPI_Finalize();
 			exit(1);
 		}
 
-	}
-	else{
+	} else {
 		MPI_Recv(&N_LENGTH, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 		MPI_Recv(&M_LENGTH, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
-		
+	
 		//Create the arrays to store the strings;
 		N = new char[N_LENGTH + 1];
 		M = new char[M_LENGTH + 1];
@@ -191,10 +190,9 @@ int main (int argc, char *argv[]) {
  
 	//MPI_Barrier (MPI_COMM_WORLD);
 
-    /*if(id == p-1){
+    /*if (id == p-1) {
 		//Faz coisas
-    }
-	else {
+    } else {
 		//Comunica
 
 		//Faz coisas
@@ -203,3 +201,4 @@ int main (int argc, char *argv[]) {
     MPI_Finalize();
     return 0;
 }
+

@@ -30,10 +30,11 @@
 *.out
 lcs-serial
 lcs-omp
+lcs-mpi
 *.i*86
 *.x86_64
 *.hex
 public-instances
-.cpp~
+*.cpp~
 Makefile~
 output
