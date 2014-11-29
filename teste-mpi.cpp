@@ -11,13 +11,14 @@
 #include <math.h>
 #include <stdlib.h>
 #include <iostream>
-#include <vector>
 
 using namespace std;
 
 /***********************
  ** GLOBAL VARIABLES
  ***********************/
+//MPI_VARIABLES
+MPI_Status status;
 
 //Direccions
 int MATCH = 0;
@@ -35,6 +36,10 @@ int M_LENGTH;
 //Auxiliary tables
 short** TABLE;
 short** TRACKER;
+
+int pos[2];
+int p;
+int id;
 
 
 /***********************
@@ -68,87 +73,111 @@ void divideInput(int p){
 		//If it's odd, we can only divide columns
 		//N Goes complete; M is divided into processors.
 		tmp = M;
-		new_M_lenght = floor(M/p); //each processor will have a part of M
-		M_LENGTH -= (p-1)*new_M_lenght; //correct last M if it's bigger: Total = first M - (p-1)floored M
+		new_M_LENGTH = floor(M_LENGTH/p); //each processor will have a part of M
+		M_LENGTH -= (p-1)*new_M_LENGTH; //correct last M if it's bigger: Total = first M - (p-1)floored M
 
 		for(i=1; i <= (p-1); i++){
-			for(j=0; j < new_M_lenght; j++){
-				new_M[j] = M[j];
+			k = 0;
+			for(j=0; j < new_M_LENGTH; j++){
+				new_M[j] = M[k];
+				k++;
 			}
 
 			MPI_Send(&N_LENGTH, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-			MPI_Send(&new_M_lenght, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
-			MPI_Send(N, N_LENGTH + 1, MPI_CHAR, i, 2, MPI_COMM_WORLD);
-			MPI_Send(new_M, new_M_lenght + 1, MPI_CHAR, i, 3, MPI_COMM_WORLD);
-
-			M.erase(0, j);
+			MPI_Send(&new_M_LENGTH, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+			MPI_Send(&N, N_LENGTH + 1, MPI_CHAR, i, 2, MPI_COMM_WORLD);
+			MPI_Send(new_M, new_M_LENGTH + 1, MPI_CHAR, i, 3, MPI_COMM_WORLD);
 		}
-			for(j=0; j < M_lenght; j++){
-				new_M[j] = M[j];
+			for(j=0; j < M_LENGTH; j++){
+				new_M[j] = M[k];
+				k++;
 			}
 			//Sends last block. Separated because it may be different size
 			MPI_Send(&N_LENGTH, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-			MPI_Send(&M_lenght, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+			MPI_Send(&M_LENGTH, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
 			MPI_Send(N, N_LENGTH + 1, MPI_CHAR, i, 2, MPI_COMM_WORLD);
-			MPI_Send(new_M, M_lenght + 1, MPI_CHAR, i, 3, MPI_COMM_WORLD);
+			MPI_Send(new_M, M_LENGTH + 1, MPI_CHAR, i, 3, MPI_COMM_WORLD);
 	}
 
 	else{ // p is pair; Divide M into p parts, divide N into 2 parts 
 			new_N_LENGTH = floor (N_LENGTH / 2); // LENGTH FOR N, in top part of matrix.
+			k=0;
 			for(i=0; i<new_N_LENGTH; i++){
-				new_N[i] = N[i]; //New_N is top part of the Matrix; N is bottom;
+				new_N[i] = N[k]; //New_N is top part of the Matrix; N is bottom;
+				k++;
 			}
-			N.erase(0, new_N_LENGTH);
-
 			//TOP MATRIX:
 			int limit = p/2;
-
+			int l=0;
 			for(i=1; i <= (limit-1); i++){
-				for(j=0; j < new_M_lenght; j++){
-					new_M[j] = M[j];
+				for(j=0; j < new_M_LENGTH; j++){
+					new_M[j] = M[l];
+					l++;
 				}
 
 				MPI_Send(&new_N_LENGTH, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-				MPI_Send(&new_M_lenght, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+				MPI_Send(&new_M_LENGTH, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
 				MPI_Send(new_N, new_N_LENGTH + 1, MPI_CHAR, i, 2, MPI_COMM_WORLD);
-				MPI_Send(new_M, new_M_lenght + 1, MPI_CHAR, i, 3, MPI_COMM_WORLD);
+				MPI_Send(new_M, new_M_LENGTH + 1, MPI_CHAR, i, 3, MPI_COMM_WORLD);
 
-				M.erase(0, j);
 			}
-			for(j=0; j < M_lenght; j++){
-				new_M[j] = M[j];
+
+			for(j=0; j < M_LENGTH; j++){
+				new_M[j] = M[l];
+				l++;
 			}
 			//Sends last block. Separated because it may be different size
 			MPI_Send(&new_N_LENGTH, 1, MPI_INT, i+1, 0, MPI_COMM_WORLD);
-			MPI_Send(&M_lenght, 1, MPI_INT, i+1, 1, MPI_COMM_WORLD);
+			MPI_Send(&M_LENGTH, 1, MPI_INT, i+1, 1, MPI_COMM_WORLD);
 			MPI_Send(new_N, new_N_LENGTH + 1, MPI_CHAR, i+1, 2, MPI_COMM_WORLD);
-			MPI_Send(new_M, M_lenght + 1, MPI_CHAR, i+1, 3, MPI_COMM_WORLD);
+			MPI_Send(new_M, M_LENGTH + 1, MPI_CHAR, i+1, 3, MPI_COMM_WORLD);
 
 			//BOTTOM MATRIX
 			N_LENGTH -= new_N_LENGTH;
-
+			for(i=0; i<N_LENGTH; i++){
+				new_N[i] = N[k]; //New_N is now bottom part of the Matrix;
+				k++;
+			}
+			l=0;
 			for(i=1; i <= (limit-1); i++){
-				for(j=0; j < new_M_lenght; j++){
-					new_M[j] = tmp[j];
+				for(j=0; j < new_M_LENGTH; j++){
+					new_M[j] = tmp[l];
+					l++;
 				}
 
 				MPI_Send(&N_LENGTH, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-				MPI_Send(&new_M_lenght, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+				MPI_Send(&new_M_LENGTH, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
 				MPI_Send(N, N_LENGTH + 1, MPI_CHAR, i, 2, MPI_COMM_WORLD);
-				MPI_Send(new_M, new_M_lenght + 1, MPI_CHAR, i, 3, MPI_COMM_WORLD);
+				MPI_Send(new_M, new_M_LENGTH + 1, MPI_CHAR, i, 3, MPI_COMM_WORLD);
 
-				tmp.erase(0, j);
 			}
-			for(j=0; j < M_lenght; j++){
-				new_M[j] = tmp[j];
+			for(j=0; j < M_LENGTH; j++){
+				new_M[j] = tmp[l];
+				l++;
 			}
 			//Sends last block. Separated because it may be different size
 			MPI_Send(&N_LENGTH, 1, MPI_INT, i+1, 0, MPI_COMM_WORLD);
-			MPI_Send(&M_lenght, 1, MPI_INT, i+1, 1, MPI_COMM_WORLD);
+			MPI_Send(&M_LENGTH, 1, MPI_INT, i+1, 1, MPI_COMM_WORLD);
 			MPI_Send(N, N_LENGTH + 1, MPI_CHAR, i+1, 2, MPI_COMM_WORLD);
-			MPI_Send(new_M, M_lenght + 1, MPI_CHAR, i+1, 3, MPI_COMM_WORLD);
+			MPI_Send(new_M, M_LENGTH + 1, MPI_CHAR, i+1, 3, MPI_COMM_WORLD);
 
 	}
+}
+
+
+
+void receiveInput(int p, int id){
+		
+
+		MPI_Recv(&N_LENGTH, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+		MPI_Recv(&M_LENGTH, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
+	
+		//Create the arrays to store the strings;
+		N = new char[N_LENGTH + 1];
+		M = new char[M_LENGTH + 1];
+
+		MPI_Recv(N, N_LENGTH + 1, MPI_CHAR, 0, 2, MPI_COMM_WORLD, &status);
+		MPI_Recv(M, M_LENGTH + 1, MPI_CHAR, 0, 3, MPI_COMM_WORLD, &status);
 }
 
 //Reads an input file with a given name and initializes global variables
@@ -192,19 +221,25 @@ void computeSolution() {
 }
 
 //Prints the result of our previous computation
-void printResult() {
-	int length = TABLE[N_LENGTH][M_LENGTH];
+void printResult(int l, int c) {
+	int length = TABLE[N_LENGTH][M_LENGTH], i, j;
 	char result[length + 1];
 	result[length--] = '\0';
 
 	//Prints the size of the biggest subsequence
-	cout << TABLE[N_LENGTH][M_LENGTH] << endl;
-
+	//cout << TABLE[N_LENGTH][M_LENGTH] << endl  -> NOT APPLIED ANYMORE!;
+	pos[2] = 0;
 	//Tracks the biggest subsequence
-	int i = N_LENGTH;
-	int j = M_LENGTH;
-
-	while (length >= 0) {
+	if ( l == 0){
+		i = N_LENGTH;
+		j = c;
+	}
+	else{
+		i = l;
+		j = M_LENGTH;
+	}
+	// ALGORITMO TEM QUE SER ALTERADO; ATÉ: ATINGIR VALOR ZERO.
+	while (TABLE[i][j] != 0) {
 		if (TRACKER[i][j] == MATCH) {
 			result[length--] = N[i-1];
 			--i;
@@ -215,7 +250,76 @@ void printResult() {
 			--j;
 	}
 
-	cout << result << endl;
+	if((p%2)==0){
+		int left_pos, top_pos;
+		if(id > ((p/2)+1)){ // FOR ALL BOTTOM MATRIXES
+			if (j == 0){ // GO LEFT
+				pos[0] = i; 
+				id--;
+				MPI_Send(&id, 1, MPI_INT, id-1, 5, MPI_COMM_WORLD);
+				MPI_Send(&pos, 2, MPI_INT, id-1, 4, MPI_COMM_WORLD);  
+			}
+	
+			if (i == 0){ // GO TOP
+				pos[1] = j; 
+				id -=(p/2);
+				MPI_Send(&id, 1, MPI_INT, id-(p/2), 5, MPI_COMM_WORLD);
+				MPI_Send(&pos, 2, MPI_INT, id-(p/2), 4, MPI_COMM_WORLD);  
+			}
+			else{
+				MPI_Recv(&left_pos, 1, MPI_INT, id-1, 7, MPI_COMM_WORLD, &status); //Receive j position from id-a
+				MPI_Recv(&top_pos, 1, MPI_INT, id - (p/2), 7, MPI_COMM_WORLD, &status); //Receive i position from id-(p/2)
+				if (left_pos >= top_pos){ // GO LEFT
+					pos[0] = i; 
+					id--;
+					MPI_Send(&id, 1, MPI_INT, id-1, 5, MPI_COMM_WORLD);
+					MPI_Send(&pos, 2, MPI_INT, id-1, 4, MPI_COMM_WORLD);  
+				}
+				else{ // GO TOP
+					pos[1] = j; 
+					id -=(p/2);
+					MPI_Send(&id, 1, MPI_INT, id-(p/2), 5, MPI_COMM_WORLD);
+					MPI_Send(&pos, 2, MPI_INT, id-(p/2), 4, MPI_COMM_WORLD);  
+				}
+			}
+			MPI_Send(&result, strlen(result), MPI_INT, 0, 8, MPI_COMM_WORLD); // STRING TO id = 0
+	
+		}
+		else 
+			if (id = (p/2)+1){
+				if (j == 0){ 
+					MPI_Send(&result, strlen(result), MPI_INT, 0, 8, MPI_COMM_WORLD);
+					MPI_Send(&UP,1,MPI_INT,0, 6, MPI_COMM_WORLD); // SET TO TERMINATE
+					
+				}
+				else{ // GO TOP
+					pos[1] = j;
+					id -=(p/2);
+					MPI_Send(&id, 1, MPI_INT, id-(p/2), 5, MPI_COMM_WORLD);
+					MPI_Send(&pos, 2, MPI_INT, id-(p/2), 4, MPI_COMM_WORLD);  
+				}
+			}
+			else{ // IS ON TOP
+				if (i == 0){
+					MPI_Send(&result, strlen(result), MPI_INT, 0, 8, MPI_COMM_WORLD);
+					MPI_Send(&UP,1,MPI_INT,0, 6, MPI_COMM_WORLD); // SET TO TERMINATE, o UP é só para ter &1
+				}
+				else{ // GO LEFT
+					pos[0] = i; 
+					id--;
+					MPI_Send(&id, 1, MPI_INT, id-1, 5, MPI_COMM_WORLD);
+					MPI_Send(&pos, 2, MPI_INT, id-1, 4, MPI_COMM_WORLD);  
+				}
+			}
+			MPI_Send(&result, strlen(result), MPI_INT, 0, 8, MPI_COMM_WORLD); // MPI_Send string to id=0
+	}
+	else{
+		pos[0] = i; 
+		id--;
+		MPI_Send(&id, 1, MPI_INT, id-1, 5, MPI_COMM_WORLD);
+		MPI_Send(&result, strlen(result), MPI_INT, 0, 8, MPI_COMM_WORLD); // String to main
+	}
+
 }
 
 
@@ -225,15 +329,14 @@ void printResult() {
 
 int main (int argc, char *argv[]) {
 
-	MPI_Status status;
-	int id, p, i;
+	
+	int i, j;
 	double secs;
+	char* result;
 
-	p = argv[1];
 	MPI_Init (&argc, &argv);
 
 	MPI_Comm_rank (MPI_COMM_WORLD, &id);
-	//Shouldn't p be argv[1] ? Where do we pass the number of processes?
 	MPI_Comm_size (MPI_COMM_WORLD, &p);
   
 	if (!id) {
@@ -264,36 +367,58 @@ int main (int argc, char *argv[]) {
 			exit(1);
 		}
 
-	} else {
-		MPI_Recv(&N_LENGTH, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-		MPI_Recv(&M_LENGTH, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
-	
-		//Create the arrays to store the strings;
-		N = new char[N_LENGTH + 1];
-		M = new char[M_LENGTH + 1];
+	} else { // INDIVIDUAL PROCESSES:
 
-		MPI_Recv(N, N_LENGTH + 1, MPI_CHAR, 0, 2, MPI_COMM_WORLD, &status);
-		MPI_Recv(M, M_LENGTH + 1, MPI_CHAR, 0, 3, MPI_COMM_WORLD, &status);
+		receiveInput(p, id);
+		initProblem();
+		computeSolution();
+
 	}
 
-	//Initialize	
-	initProblem();
+	if (id = p)  // Bottom last matrix
+		printResult(0,0);
 
-	//Compute
-    computeSolution();
+	else{ 
+		int current_id, initial_value;
+			while (id != 0){
+				if(id > (p/2)){
+					MPI_Recv(pos, 2, MPI_INT, MPI_ANY_SOURCE, 7, MPI_COMM_WORLD, &status);
+					i = pos[0];
+					j = pos[1];
+					if (i == 0)
+						MPI_Send(&TABLE[i][j], 1, MPI_INT, id+(p/2), 7, MPI_COMM_WORLD);
+					else
+						MPI_Send(&TABLE[i][j], 1, MPI_INT, id+1, 7, MPI_COMM_WORLD);
 
-	//Print
-	printResult();
- 
-	//MPI_Barrier (MPI_COMM_WORLD);
+				MPI_Recv(&current_id, 1, MPI_INT, MPI_ANY_SOURCE, 5, MPI_COMM_WORLD, &status);
+				MPI_Recv(&initial_value, 2, MPI_INT, MPI_ANY_SOURCE, 4, MPI_COMM_WORLD, &status); //RECEIVE POS
+				
+				if (id = current_id); // COMPLETE
+					//printResult(initial_value[0], initial_value[1]); WHY ERROR?
+				
+				}
+			// ADD BARRIER?
+			}
+	}
 
-    /*if (id == p-1) {
-		//Faz coisas
-    } else {
-		//Comunica
+	if (id=0){
+		int terminate = 0, string_size=0;
+		char *str;
+//REVIEW!
+		while (terminate == 0){
+			//MPI_Recv() // RECEIVE SIZE OF STRING
+		//	str = malloc(string_size+1);
+			//MPI_Recv() // RECEIVE STRING
+			//result = realloc(strlen(result)+string_size); // REVIEW LIMITS FOR SEGFAULT
+			strcat(result, str);
+			// RECEIVE STRINGS AND CONCATENATE
+			MPI_Recv(&terminate, 1, MPI_INT, MPI_ANY_SOURCE, 6, MPI_COMM_WORLD, &status);
+		}
+	}
 
-		//Faz coisas
-	}*/
+	cout << strlen(result) << endl;
+	cout << result << endl;
+
 
     MPI_Finalize();
     return 0;
