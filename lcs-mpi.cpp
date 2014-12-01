@@ -153,14 +153,50 @@ int main (int argc, char *argv[]) {
 				exit(1);
 
 			//Divide input
+			if(!even){
+				PM_LENGTH = floor(M_LENGTH / p);
+				for (i = 1; i < p; i++) {
+					PM_index = i*PM_LENGTH;
+					if(i == p-1) PM_LENGTH = M_LENGTH - (p-1)*PM_LENGTH;					
+					MPI_Send(&N_LENGTH, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+					MPI_Send(&PM_LENGTH, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+					MPI_Send(N, N_LENGTH, MPI_CHAR, i, 2, MPI_COMM_WORLD);
+					MPI_Send((M + PM_index), PM_LENGTH, MPI_CHAR, i, 3, MPI_COMM_WORLD);
+				}
+				M_LENGTH = floor(M_LENGTH / p); 
 
-			//Envia informação aos outros processos
+			} else {
+				PM_LENGTH = floor(M_LENGTH / p);
+				PN_LENGTH = floor(N_LENGTH/2);
+				for(i = 1; i < p/2; i++) {
+					PM_index = i*PM_LENGTH;
+					if(i == (p/2)-1) PM_LENGTH = M_LENGTH - ((p/2)-1)*PM_LENGTH;					
+					MPI_Send(&PN_LENGTH, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+					MPI_Send(&PM_LENGTH, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+					MPI_Send(N, PN_LENGTH, MPI_CHAR, i, 2, MPI_COMM_WORLD);
+					MPI_Send((M + PM_index), PM_LENGTH, MPI_CHAR, i, 3, MPI_COMM_WORLD);
+				}
+				PM_LENGTH = floor(M_LENGTH / p);
+				PN_index = PN_LENGTH; 
+				PN_LENGTH = N_LENGTH - PN_LENGTH;
+				for(; i < p; i++){
+					PM_index = i*PM_LENGTH;
+					if(i == p-1) PM_LENGTH = M_LENGTH - ((p/2)-1)*PM_LENGTH;					
+					MPI_Send(&PN_LENGTH, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+					MPI_Send(&PM_LENGTH, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+					MPI_Send((N + PN_index), PN_LENGTH, MPI_CHAR, i, 2, MPI_COMM_WORLD);
+					MPI_Send((M + PM_index), PM_LENGTH, MPI_CHAR, i, 3, MPI_COMM_WORLD);
+				}
+				M_LENGTH = floor(M_LENGTH / p);
+			}
+
+			/*//Envia informação aos outros processos
 			for (i = 1; i < p; i++) {
 				MPI_Send(&N_LENGTH, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
 				MPI_Send(&M_LENGTH, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
 				MPI_Send(N, N_LENGTH + 1, MPI_CHAR, i, 2, MPI_COMM_WORLD);
 				MPI_Send(M, M_LENGTH + 1, MPI_CHAR, i, 3, MPI_COMM_WORLD);
-			}
+			}*/
 		} else {
 			printf ("%s: input file not found.", filename.c_str());
 			MPI_Finalize();
@@ -175,15 +211,15 @@ int main (int argc, char *argv[]) {
 		N = new char[N_LENGTH + 1];
 		M = new char[M_LENGTH + 1];
 
-		MPI_Recv(N, N_LENGTH + 1, MPI_CHAR, 0, 2, MPI_COMM_WORLD, &status);
-		MPI_Recv(M, M_LENGTH + 1, MPI_CHAR, 0, 3, MPI_COMM_WORLD, &status);
+		MPI_Recv(N, N_LENGTH, MPI_CHAR, 0, 2, MPI_COMM_WORLD, &status);
+		MPI_Recv(M, M_LENGTH, MPI_CHAR, 0, 3, MPI_COMM_WORLD, &status);
 	}
 
 	//Initialize	
 	initProblem();
 
 	//Compute
-    computeSolution();
+  computeSolution();
 
 	//Print
 	printResult();
