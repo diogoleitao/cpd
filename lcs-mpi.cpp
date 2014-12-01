@@ -180,7 +180,7 @@ int main (int argc, char *argv[]) {
 				PN_index = PN_LENGTH; 
 				PN_LENGTH = N_LENGTH - PN_LENGTH;
 				for(; i < p; i++){
-					PM_index = i*PM_LENGTH;
+					PM_index = (i-p/2)*PM_LENGTH;
 					if(i == p-1) PM_LENGTH = M_LENGTH - ((p/2)-1)*PM_LENGTH;					
 					MPI_Send(&PN_LENGTH, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
 					MPI_Send(&PM_LENGTH, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
