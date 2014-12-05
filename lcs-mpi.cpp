@@ -190,8 +190,8 @@ int main (int argc, char *argv[]) {
 
 	//initialize MPI
 	MPI_Init (&argc, &argv);
-  MPI_Comm_rank (MPI_COMM_WORLD, &id);
-  MPI_Comm_size (MPI_COMM_WORLD, &p);
+	MPI_Comm_rank (MPI_COMM_WORLD, &id);
+	MPI_Comm_size (MPI_COMM_WORLD, &p);
 	if(id == 0){
 		string filename = argv[1];		
 		if(readFile(filename)) {
@@ -216,9 +216,11 @@ int main (int argc, char *argv[]) {
 	int size;
 	for(int j=1; j < M_LENGTH; j += MAXWIDTH){		 
 		size = min(MAXWIDTH, M_LENGTH-j);
-		if(id != 0) MPI_Recv(&(TABLE[0][j]), size, MPI_SHORT, id-1, 5, MPI_COMM_WORLD, &status);
+		if(id != 0)
+			MPI_Recv(&(TABLE[0][j]), size, MPI_SHORT, id-1, 5, MPI_COMM_WORLD, &status);
 		computeBlock(j, size);
-		if(id != p-1) MPI_Send(&(TABLE[N_LENGTH-1][j]), size, MPI_SHORT, id+1, 5, MPI_COMM_WORLD);
+		if(id != p-1)
+			MPI_Send(&(TABLE[N_LENGTH-1][j]), size, MPI_SHORT, id+1, 5, MPI_COMM_WORLD);
 	}
 
 	//Print
