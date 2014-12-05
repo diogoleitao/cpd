@@ -111,7 +111,7 @@ void splitLines(){
 		size = floor(rl/rp);
 		MPI_Send(&size, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
 		MPI_Send(&M_LENGTH, 1, MPI_INT, i, 2, MPI_COMM_WORLD);
-		MPI_Send(N+index, size, MPI_CHAR, i, 3, MPI_COMM_WORLD);		
+		MPI_Send(&(N[index]), size, MPI_CHAR, i, 3, MPI_COMM_WORLD);		
 		MPI_Send(M, M_LENGTH, MPI_CHAR, i, 4, MPI_COMM_WORLD);
 		rl -= size;
 		rp--;
@@ -158,7 +158,7 @@ void printSolution(){
 	char result[length + 1];
 	
 	if(id == p-1) result[index--] = '\0';
-	else MPI_Recv(result+index+1, length-index, MPI_CHAR, id+1, 9, MPI_COMM_WORLD, &status);
+	else MPI_Recv(&(result[index+1]), length-index, MPI_CHAR, id+1, 9, MPI_COMM_WORLD, &status);
 	
 	while(i > 0 && j > 0){
 		if(N[i-1] == M[j-1]){
@@ -179,7 +179,7 @@ void printSolution(){
 		MPI_Send(&length, 1, MPI_INT, id-1, 6, MPI_COMM_WORLD);
 		MPI_Send(&index, 1, MPI_INT, id-1, 7, MPI_COMM_WORLD);
 		MPI_Send(&j, 1, MPI_INT, id-1, 8, MPI_COMM_WORLD);
-		MPI_Send(result+index+1, length-index, MPI_CHAR, id-1, 9, MPI_COMM_WORLD);
+		MPI_Send(&(result[index+1]), length-index, MPI_CHAR, id-1, 9, MPI_COMM_WORLD);
 	}	
 }
 
