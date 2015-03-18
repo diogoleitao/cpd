@@ -10,4 +10,4 @@ clean:
 	rm -f lcs-omp lcs-serial lcs-mpi *.o
 
 zip:
-	zip  g12omp lcs-serial.cpp lcs-omp.cpp lcs-mpi.cpp
+	zip  g12omp lcs-serial.cpp lcs-mpi.cpp
